@@ -1,0 +1,8 @@
+#!/bin/bash
+
+JSON_FIELDS="labels,number,title"
+EXCLUDE_LABELS="p1|p2|p3|core|help wanted|tracking issue|needs-design|blocked|needs-user-input"
+OUTPUT_FORMAT="map(\"\\(.number)\t\\(.title)\tlabels: \\([.labels[].name] | join(\",\"))\")"
+JQ="map(select(any(.labels[]; .name | test(\""${EXCLUDE_LABELS}"\")) | not)) | "${OUTPUT_FORMAT}" | .[]"
+
+exec gh issue list "$@" --json "${JSON_FIELDS}" --jq "${JQ}"
