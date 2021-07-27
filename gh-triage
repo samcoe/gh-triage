@@ -1,8 +1,26 @@
 #!/bin/bash
 
 JSON_FIELDS="labels,number,title"
-EXCLUDE_LABELS="p1|p2|p3|core|help wanted|tracking issue|needs-design|blocked|needs-user-input"
-OUTPUT_FORMAT="map(\"\\(.number)\t\\(.title)\tlabels: \\([.labels[].name] | join(\",\"))\")"
-JQ="map(select(any(.labels[]; .name | test(\""${EXCLUDE_LABELS}"\")) | not)) | "${OUTPUT_FORMAT}" | .[]"
+TEMPLATE='
+  {{- range $issue := . -}}
+    {{- $found := false -}}
+    {{- $labels := "" -}}
+    {{- range $index, $label := $issue.labels -}}
+      {{- if eq $index 0 -}}
+        {{- $labels = printf "%s" $label.name -}}
+      {{- else -}}
+        {{- $labels = printf "%s, %s" $labels $label.name -}}
+      {{- end -}}
+      {{- if not $found -}}
+        {{- if eq $label.name "p1" "p2" "p3" "core" "help wanted" "tracking issue" "needs-design" "blocked" "needs-user-input" -}}
+          {{- $found = true -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+    {{- if not $found -}}
+      {{- printf "%v\t%s\tlabels: %s\n" $issue.number $issue.title $labels -}}
+    {{- end -}}
+  {{- end -}}
+'
 
-exec gh issue list "$@" --json "${JSON_FIELDS}" --jq "${JQ}"
+exec gh issue list "$@" --json "${JSON_FIELDS}" --template "${TEMPLATE}"
