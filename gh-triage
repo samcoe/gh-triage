@@ -1,7 +1,8 @@
 #!/bin/bash
 
-JSON_FIELDS="labels,number,title"
+JSON_FIELDS="createdAt,labels,number,title"
 TEMPLATE='
+  {{- printf "Showing issues to triage\n\n" -}}
   {{- range $issue := . -}}
     {{- $found := false -}}
     {{- $labels := "" -}}
@@ -18,7 +19,19 @@ TEMPLATE='
       {{- end -}}
     {{- end -}}
     {{- if not $found -}}
-      {{- printf "%v\t%s\tlabels: %s\n" $issue.number $issue.title $labels -}}
+      {{- $number := autocolor "green" (printf "#%v" $issue.number) -}}
+      {{- $timeAgo := autocolor "black+h" (timeago $issue.createdAt) -}}
+      {{- $title := $issue.title -}}
+      {{- if gt (len $issue.title) 50 -}}
+        {{- $title = printf "%47.47s..." $issue.title -}}
+      {{- end -}}
+      {{- if gt (len $labels) 20 -}}
+        {{- $labels = printf "%17.17s..." $labels -}}
+      {{- end -}}
+      {{- if gt (len $labels) 0 -}}
+        {{- $labels = printf "(%s)" $labels -}}
+      {{- end -}}
+      {{- printf "%v\t%-50.50s\t%-20.20s\t%s\n" $number $title $labels $timeAgo -}}
     {{- end -}}
   {{- end -}}
 '
