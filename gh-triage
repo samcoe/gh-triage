@@ -3,15 +3,10 @@
 JSON_FIELDS="createdAt,labels,number,title"
 TEMPLATE='
   {{- printf "Showing issues to triage\n\n" -}}
+  {{- tablerow "ID" "TITLE" "LABELS" "CREATED AT" -}}
   {{- range $issue := . -}}
     {{- $found := false -}}
-    {{- $labels := "" -}}
     {{- range $index, $label := $issue.labels -}}
-      {{- if eq $index 0 -}}
-        {{- $labels = printf "%s" $label.name -}}
-      {{- else -}}
-        {{- $labels = printf "%s, %s" $labels $label.name -}}
-      {{- end -}}
       {{- if not $found -}}
         {{- if eq $label.name "p1" "p2" "p3" "core" "help wanted" "tracking issue" "needs-design" "blocked" "needs-user-input" -}}
           {{- $found = true -}}
@@ -19,19 +14,10 @@ TEMPLATE='
       {{- end -}}
     {{- end -}}
     {{- if not $found -}}
-      {{- $number := autocolor "green" (printf "#%v" $issue.number) -}}
-      {{- $timeAgo := autocolor "black+h" (timeago $issue.createdAt) -}}
-      {{- $title := $issue.title -}}
-      {{- if gt (len $issue.title) 50 -}}
-        {{- $title = printf "%47.47s..." $issue.title -}}
-      {{- end -}}
-      {{- if gt (len $labels) 20 -}}
-        {{- $labels = printf "%17.17s..." $labels -}}
-      {{- end -}}
-      {{- if gt (len $labels) 0 -}}
-        {{- $labels = printf "(%s)" $labels -}}
-      {{- end -}}
-      {{- printf "%v\t%-50.50s\t%-20.20s\t%s\n" $number $title $labels $timeAgo -}}
+      {{- $number := printf "#%v" $issue.number | autocolor "green" -}}
+      {{- $labels := $issue.labels | pluck "name" | join ", " -}}
+      {{- $timeAgo := timeago $issue.createdAt | autocolor "black+h" -}}
+      {{- tablerow $number $issue.title $labels $timeAgo -}}
     {{- end -}}
   {{- end -}}
 '
